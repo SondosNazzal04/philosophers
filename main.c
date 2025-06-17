@@ -6,13 +6,11 @@
 /*   By: snazzal <snazzal@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/18 13:37:47 by snazzal           #+#    #+#             */
-/*   Updated: 2025/06/17 17:20:30 by snazzal          ###   ########.fr       */
+/*   Updated: 2025/06/17 18:43:15 by snazzal          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
-int shared;
-pthread_mutex_t	lock;
 
 int	ft_atoi(const char *nptr)
 {
@@ -58,28 +56,42 @@ void	ft_exit(int exit_signal, char *error_message)
 }
 void	*increment(void *thread)
 {
-	pthread_mutex_lock(&lock);
-	shared++;
-	printf("Thread %ld incremented shared to %d\n", (long)thread, shared);
-	pthread_mutex_unlock(&lock);
+	t_philo	*philo;
+	philo = (t_philo *) thread;
+	pthread_mutex_lock(&philo->data->fork);
+	philo->data->shared++;
+	printf("Thread %d incremented shared to %d\n",
+		philo->index, philo->data->shared);
+	pthread_mutex_unlock(&philo->data->fork);
 	return (NULL);
 }
+
+
 
 int	main(int argc, char **argv)
 {
 	int			i;
-	pthread_t	*philos;
-	// (void) argv;
-	(void) argc;
-	// if (argc != 6 && argc != 5)
-	// 	ft_exit(1, "Invalid number of arguments");
-	philos = malloc(sizeof(pthread_t) * ft_atoi(argv[1]));
-	i = 0;
-	pthread_mutex_init(&lock, NULL);
+	t_philo		**philos;
+	t_data		*data;
 
+	if (argc != 2)
+		ft_exit(1, "Invalid number of arguments");
+	philos = malloc(sizeof(t_philo *) * ft_atoi(argv[1]));
+	data = malloc(sizeof(t_data));
+	data->shared = 0;
+	i = 0;
 	while (i < ft_atoi(argv[1]))
 	{
-		if (pthread_create(&philos[i], NULL, increment, (void *)(__intptr_t)i) != 0)
+		philos[i] = malloc(sizeof(t_philo));
+		philos[i]->data = data;
+		philos[i]->index = i;
+		i++;
+	}
+	i = 0;
+	pthread_mutex_init(&philos[i]->data->fork, NULL);
+	while (i < ft_atoi(argv[1]))
+	{
+		if (pthread_create(&philos[i]->philo, NULL, increment, philos[i]) != 0)
 		{
 			perror("Failed to create thread");
 			return (1);
@@ -89,15 +101,16 @@ int	main(int argc, char **argv)
 	i = 0;
 	while (i < ft_atoi(argv[1]))
 	{
-		if (pthread_join(philos[i], NULL) != 0)
+		if (pthread_join(philos[i]->philo, NULL) != 0)
 		{
 			perror("Failed to join thread");
 			return (1);
 		}
 		i++;
 	}
-	pthread_mutex_destroy(&lock);
-	printf("Final value: %d\n", shared);
+	pthread_mutex_destroy(&philos[0]->data->fork);
+	printf("Final value: %d\n", philos[0]->data->shared);
+	free(philos[0]->data);
 	free(philos);
 	return (0);
 }
