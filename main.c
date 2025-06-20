@@ -6,11 +6,26 @@
 /*   By: snazzal <snazzal@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/18 13:37:47 by snazzal           #+#    #+#             */
-/*   Updated: 2025/06/17 18:43:15 by snazzal          ###   ########.fr       */
+/*   Updated: 2025/06/20 18:54:24 by snazzal          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
+
+int	ft_free(t_philo **args)
+{
+	int	i;
+
+	i = 0;
+	if (!args)
+		return (0);
+	while (args[i])
+	{
+		free(args[i]);
+		i++;
+	}
+	return (0);
+}
 
 int	ft_atoi(const char *nptr)
 {
@@ -66,27 +81,48 @@ void	*increment(void *thread)
 	return (NULL);
 }
 
+int	init(t_philo ***philos, char **argv)
+{
+	t_data		*data;
+	int			i;
 
+	data = malloc(sizeof(t_data));
+	if (!data)
+		return (0);
+	data->shared = 0;
+	data->philos_num = ft_atoi(argv[1]);
+	*philos = malloc(sizeof(t_philo *) * data->philos_num);
+	if (!philos)
+	{
+		free(data);
+		return (0);
+	}
+	i = 0;
+	while (i < ft_atoi(argv[1]))
+	{
+		(*philos)[i] = malloc(sizeof(t_philo));
+		if (!(*philos)[i])
+		{
+			ft_free(*philos);
+			return (0);
+		}
+		(*philos)[i]->data = data;
+		(*philos)[i]->index = i;
+		i++;
+	}
+	return (1);
+}
 
 int	main(int argc, char **argv)
 {
 	int			i;
 	t_philo		**philos;
-	t_data		*data;
 
 	if (argc != 2)
 		ft_exit(1, "Invalid number of arguments");
-	philos = malloc(sizeof(t_philo *) * ft_atoi(argv[1]));
-	data = malloc(sizeof(t_data));
-	data->shared = 0;
-	i = 0;
-	while (i < ft_atoi(argv[1]))
-	{
-		philos[i] = malloc(sizeof(t_philo));
-		philos[i]->data = data;
-		philos[i]->index = i;
-		i++;
-	}
+	philos = NULL;
+	if (!init(&philos, argv))
+		return (1);
 	i = 0;
 	pthread_mutex_init(&philos[i]->data->fork, NULL);
 	while (i < ft_atoi(argv[1]))

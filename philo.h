@@ -6,7 +6,7 @@
 /*   By: snazzal <snazzal@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 11:39:48 by snazzal           #+#    #+#             */
-/*   Updated: 2025/06/17 18:16:24 by snazzal          ###   ########.fr       */
+/*   Updated: 2025/06/17 18:47:13 by snazzal          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@ typedef struct s_data
 {
 	int shared;
 	pthread_mutex_t fork;
+	int	philos_num;
 } t_data;
 
 typedef struct s_philo
