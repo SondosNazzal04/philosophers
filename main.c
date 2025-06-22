@@ -12,7 +12,7 @@
 
 #include "philo.h"
 
-int	fail_flag = 0;
+int	fail_flag = 1;
 
 int	ft_free(t_philo **args)
 {
@@ -28,6 +28,16 @@ int	ft_free(t_philo **args)
 	}
 	free(args);
 	return (0);
+}
+
+void	cleanup(t_philo **philos, t_data *data)
+{
+	if (data->forks)
+		free(data->forks);
+	if (data)
+		free(data);
+	if (philos)
+		ft_free(philos);
 }
 
 int	ft_atoi(const char *nptr)
@@ -186,12 +196,11 @@ int	create_philos(t_philo **philos)
 	return (1);
 }
 
-int	join_philos(t_philo **philos, t_data **data)
+int	join_philos(t_philo **philos)
 {
 	int	i;
 
 	i = 0;
-	(void)data;
 	while (i < (*philos)->data->philos_num)
 	{
 		if (pthread_join(philos[i]->philo, NULL) != 0)
@@ -204,11 +213,26 @@ int	join_philos(t_philo **philos, t_data **data)
 	return (1);
 }
 
+int	destroy_forks(t_data *data)
+{
+	int	i;
+
+	i = 0;
+	while (i < data->philos_num)
+	{
+		// printf("thread %i right %p\n", i, philos[i]->right);
+		// printf("thread %i left %p\n", i, philos[i]->left);
+		pthread_mutex_destroy(&data->forks[i]);
+		i++;
+	}
+	return (1);
+}
+
 int	main(int argc, char **argv)
 {
 	t_philo	**philos;
 	t_data	*data;
-	int		i;
+	// int		i;
 
 	if (argc != 2)
 	{
@@ -220,29 +244,28 @@ int	main(int argc, char **argv)
 		return (1);
 	if (!create_philos(philos))
 	{
-		free(data);
-		free(data->forks);
-		ft_free(philos);
+		cleanup(philos, data);
 		return (1);
 	}
-	if (!join_philos(philos, &data))
+	if (!join_philos(philos))
 	{
-		free(data);
-		free(data->forks);
-		ft_free(philos);
+		cleanup(philos, data);
 		return (1);
 	}
-	i = 0;
-	while (i < data->philos_num)
+	if (!destroy_forks(data))
 	{
-		// printf("thread %i right %p\n", i, philos[i]->right);
-		// printf("thread %i left %p\n", i, philos[i]->left);
-		pthread_mutex_destroy(&data->forks[i]);
-		i++;
+		cleanup(philos, data);
+		return (1);
 	}
+	// i = 0;
+	// while (i < data->philos_num)
+	// {
+	// 	// printf("thread %i right %p\n", i, philos[i]->right);
+	// 	// printf("thread %i left %p\n", i, philos[i]->left);
+	// 	pthread_mutex_destroy(&data->forks[i]);
+	// 	i++;
+	// }
 	printf("Final value: %d\n", philos[0]->data->shared);
-	free(data->forks);
-	free(philos[0]->data);
-	ft_free(philos);
+	cleanup(philos, data);
 	return (0);
 }
