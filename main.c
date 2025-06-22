@@ -6,24 +6,27 @@
 /*   By: snazzal <snazzal@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/18 13:37:47 by snazzal           #+#    #+#             */
-/*   Updated: 2025/06/20 18:54:24 by snazzal          ###   ########.fr       */
+/*   Updated: 2025/06/22 12:08:13 by snazzal          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
+
+int	fail_flag = 0;
 
 int	ft_free(t_philo **args)
 {
 	int	i;
 
 	i = 0;
-	if (!args)
+	if (!args || !args[0])
 		return (0);
 	while (args[i])
 	{
 		free(args[i]);
 		i++;
 	}
+	free(args);
 	return (0);
 }
 
@@ -54,7 +57,6 @@ int	ft_atoi(const char *nptr)
 	return (num);
 }
 
-
 void	ft_putstr_fd(char *s, int fd)
 {
 	while (*s)
@@ -64,50 +66,139 @@ void	ft_putstr_fd(char *s, int fd)
 	}
 }
 
-void	ft_exit(int exit_signal, char *error_message)
-{
-	ft_putstr_fd(error_message, 2);
-	exit(exit_signal);
-}
 void	*increment(void *thread)
 {
 	t_philo	*philo;
+
 	philo = (t_philo *) thread;
-	pthread_mutex_lock(&philo->data->fork);
-	philo->data->shared++;
-	printf("Thread %d incremented shared to %d\n",
-		philo->index, philo->data->shared);
-	pthread_mutex_unlock(&philo->data->fork);
+	usleep(50);
+	if (philo->index % 2 == 0)
+	{
+		pthread_mutex_lock(philo->right);
+		pthread_mutex_lock(philo->left);
+		pthread_mutex_lock(&philo->data->mutex);
+		philo->data->shared++;
+		printf("Thread %d incremented shared to %d\n",
+			philo->index, philo->data->shared);
+		usleep(1000);
+		pthread_mutex_unlock(&philo->data->mutex);
+		pthread_mutex_unlock(philo->left);
+		pthread_mutex_unlock(philo->right);
+		usleep(1000);
+	}
+	else
+	{
+		pthread_mutex_lock(philo->left);
+		pthread_mutex_lock(philo->right);
+		pthread_mutex_lock(&philo->data->mutex);
+		philo->data->shared++;
+		printf("Thread %d incremented shared to %d\n",
+			philo->index, philo->data->shared);
+		usleep(1000);
+		pthread_mutex_unlock(&philo->data->mutex);
+		pthread_mutex_unlock(philo->right);
+		pthread_mutex_unlock(philo->left);
+		usleep(1000);
+	}
 	return (NULL);
 }
 
-int	init(t_philo ***philos, char **argv)
+int	init_philos(t_philo **philos, t_data *data)
 {
-	t_data		*data;
-	int			i;
+	int	i;
 
-	data = malloc(sizeof(t_data));
-	if (!data)
-		return (0);
-	data->shared = 0;
-	data->philos_num = ft_atoi(argv[1]);
-	*philos = malloc(sizeof(t_philo *) * data->philos_num);
-	if (!philos)
+	i = 0;
+	data->forks = malloc(sizeof(pthread_mutex_t)
+				* (data->philos_num));
+	if (!data->forks)
 	{
-		free(data);
+		ft_free(philos);
 		return (0);
 	}
-	i = 0;
-	while (i < ft_atoi(argv[1]))
+	while (i < data->philos_num)
 	{
-		(*philos)[i] = malloc(sizeof(t_philo));
-		if (!(*philos)[i])
+		philos[i] = malloc(sizeof(t_philo));
+		if (!philos[i])
 		{
-			ft_free(*philos);
+			ft_free(philos);
 			return (0);
 		}
-		(*philos)[i]->data = data;
-		(*philos)[i]->index = i;
+		philos[i]->data = data;
+		philos[i]->index = i;
+		pthread_mutex_init(&data->forks[i], NULL);
+		philos[i]->left = &data->forks[i];
+		if (i == data->philos_num - 1)
+			philos[i]->right = &data->forks[0];
+		else
+			philos[i]->right = &data->forks[i + 1];
+		i++;
+	}
+	pthread_mutex_init(&data->mutex, NULL);
+	philos[data->philos_num] = NULL;
+	return (1);
+}
+
+t_philo	**init(char **argv, t_data **data)
+{
+	t_philo		**philos;
+
+	*data = malloc(sizeof(t_data));
+	if (!data)
+		return (NULL);
+	(*data)->shared = 0;
+	(*data)->philos_num = ft_atoi(argv[1]);
+	if ((*data)->philos_num <= 0 || (*data)->philos_num > 200)
+	{
+		free(*data);
+		ft_putstr_fd("Invalid number of philosophers.\n", 2);
+		return (NULL);
+	}
+	philos = malloc(sizeof(t_philo *) * ((*data)->philos_num + 1));
+	if (!philos)
+	{
+		free(*data);
+		free((*data)->forks);
+		return (NULL);
+	}
+	if (!init_philos(philos, *data))
+		return (NULL);
+	return (philos);
+}
+
+int	create_philos(t_philo **philos)
+{
+	int	i;
+
+	i = 0;
+	if (!philos || !philos[0])
+		return (0);
+	while (i < philos[0]->data->philos_num)
+	{
+		pthread_mutex_init(&philos[0]->data->forks[i], NULL);
+		if (pthread_create(&philos[i]->philo, NULL,
+				increment, philos[i]) != 0)
+		{
+			perror("Failed to create thread");
+			return (0);
+		}
+		i++;
+	}
+	return (1);
+}
+
+int	join_philos(t_philo **philos, t_data **data)
+{
+	int	i;
+
+	i = 0;
+	(void)data;
+	while (i < (*philos)->data->philos_num)
+	{
+		if (pthread_join(philos[i]->philo, NULL) != 0)
+		{
+			ft_putstr_fd("Failed to join thread.\n", 2);
+			return (0);
+		}
 		i++;
 	}
 	return (1);
@@ -115,38 +206,43 @@ int	init(t_philo ***philos, char **argv)
 
 int	main(int argc, char **argv)
 {
-	int			i;
-	t_philo		**philos;
+	t_philo	**philos;
+	t_data	*data;
+	int		i;
 
 	if (argc != 2)
-		ft_exit(1, "Invalid number of arguments");
-	philos = NULL;
-	if (!init(&philos, argv))
+	{
+		ft_putstr_fd("Invalid number of arguments.\n", 2);
 		return (1);
-	i = 0;
-	pthread_mutex_init(&philos[i]->data->fork, NULL);
-	while (i < ft_atoi(argv[1]))
+	}
+	philos = init(argv, &data);
+	if (!philos)
+		return (1);
+	if (!create_philos(philos))
 	{
-		if (pthread_create(&philos[i]->philo, NULL, increment, philos[i]) != 0)
-		{
-			perror("Failed to create thread");
-			return (1);
-		}
-		i++;
+		free(data);
+		free(data->forks);
+		ft_free(philos);
+		return (1);
+	}
+	if (!join_philos(philos, &data))
+	{
+		free(data);
+		free(data->forks);
+		ft_free(philos);
+		return (1);
 	}
 	i = 0;
-	while (i < ft_atoi(argv[1]))
+	while (i < data->philos_num)
 	{
-		if (pthread_join(philos[i]->philo, NULL) != 0)
-		{
-			perror("Failed to join thread");
-			return (1);
-		}
+		// printf("thread %i right %p\n", i, philos[i]->right);
+		// printf("thread %i left %p\n", i, philos[i]->left);
+		pthread_mutex_destroy(&data->forks[i]);
 		i++;
 	}
-	pthread_mutex_destroy(&philos[0]->data->fork);
 	printf("Final value: %d\n", philos[0]->data->shared);
+	free(data->forks);
 	free(philos[0]->data);
-	free(philos);
+	ft_free(philos);
 	return (0);
 }
