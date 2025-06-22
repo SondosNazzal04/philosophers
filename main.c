@@ -6,7 +6,7 @@
 /*   By: snazzal <snazzal@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/18 13:37:47 by snazzal           #+#    #+#             */
-/*   Updated: 2025/06/22 12:08:13 by snazzal          ###   ########.fr       */
+/*   Updated: 2025/06/22 19:28:43 by snazzal          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,37 +79,38 @@ void	ft_putstr_fd(char *s, int fd)
 void	*increment(void *thread)
 {
 	t_philo	*philo;
+	int		right_locked;
+	int		left_locked;
 
 	philo = (t_philo *) thread;
 	usleep(50);
+	right_locked = 0;
+	left_locked = 0;
 	if (philo->index % 2 == 0)
 	{
-		pthread_mutex_lock(philo->right);
-		pthread_mutex_lock(philo->left);
-		pthread_mutex_lock(&philo->data->mutex);
-		philo->data->shared++;
-		printf("Thread %d incremented shared to %d\n",
-			philo->index, philo->data->shared);
-		usleep(1000);
-		pthread_mutex_unlock(&philo->data->mutex);
-		pthread_mutex_unlock(philo->left);
-		pthread_mutex_unlock(philo->right);
-		usleep(1000);
+		if (pthread_mutex_lock(philo->right) == 0)
+			right_locked = 1;
+		if (pthread_mutex_lock(philo->left) == 0)
+			left_locked = 1;
 	}
 	else
 	{
-		pthread_mutex_lock(philo->left);
-		pthread_mutex_lock(philo->right);
-		pthread_mutex_lock(&philo->data->mutex);
-		philo->data->shared++;
-		printf("Thread %d incremented shared to %d\n",
-			philo->index, philo->data->shared);
-		usleep(1000);
-		pthread_mutex_unlock(&philo->data->mutex);
-		pthread_mutex_unlock(philo->right);
-		pthread_mutex_unlock(philo->left);
-		usleep(1000);
+		if (pthread_mutex_lock(philo->left) == 0)
+			left_locked = 1;
+		if (pthread_mutex_lock(philo->right) == 0)
+			right_locked = 1;
 	}
+	pthread_mutex_lock(&philo->data->mutex);
+	philo->data->shared++;
+	printf("Thread %d incremented shared to %d\n",
+		philo->index, philo->data->shared);
+	usleep(1000);
+	pthread_mutex_unlock(&philo->data->mutex);
+	if (left_locked)
+		pthread_mutex_unlock(philo->left);
+	if (right_locked)
+		pthread_mutex_unlock(philo->right);
+	usleep(1000);
 	return (NULL);
 }
 
@@ -184,7 +185,6 @@ int	create_philos(t_philo **philos)
 		return (0);
 	while (i < philos[0]->data->philos_num)
 	{
-		pthread_mutex_init(&philos[0]->data->forks[i], NULL);
 		if (pthread_create(&philos[i]->philo, NULL,
 				increment, philos[i]) != 0)
 		{
@@ -222,9 +222,11 @@ int	destroy_forks(t_data *data)
 	{
 		// printf("thread %i right %p\n", i, philos[i]->right);
 		// printf("thread %i left %p\n", i, philos[i]->left);
-		pthread_mutex_destroy(&data->forks[i]);
+		if (pthread_mutex_destroy(&data->forks[i]) != 0)
+			ft_putstr_fd("Failed to destroy fork", 2);
 		i++;
 	}
+	pthread_mutex_destroy(&data->mutex);
 	return (1);
 }
 
@@ -232,7 +234,6 @@ int	main(int argc, char **argv)
 {
 	t_philo	**philos;
 	t_data	*data;
-	// int		i;
 
 	if (argc != 2)
 	{
@@ -257,14 +258,6 @@ int	main(int argc, char **argv)
 		cleanup(philos, data);
 		return (1);
 	}
-	// i = 0;
-	// while (i < data->philos_num)
-	// {
-	// 	// printf("thread %i right %p\n", i, philos[i]->right);
-	// 	// printf("thread %i left %p\n", i, philos[i]->left);
-	// 	pthread_mutex_destroy(&data->forks[i]);
-	// 	i++;
-	// }
 	printf("Final value: %d\n", philos[0]->data->shared);
 	cleanup(philos, data);
 	return (0);
