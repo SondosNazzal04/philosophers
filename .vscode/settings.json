@@ -6,6 +6,7 @@
 		"span": "c",
 		"chrono": "c",
 		"variant": "c",
-		"iomanip": "c"
+		"iomanip": "c",
+		"cstdlib": "c"
 	}
 }

@@ -6,7 +6,7 @@
 /*   By: snazzal <snazzal@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 11:39:48 by snazzal           #+#    #+#             */
-/*   Updated: 2025/06/24 13:36:58 by snazzal          ###   ########.fr       */
+/*   Updated: 2025/06/24 16:07:44 by snazzal          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,7 @@ typedef struct s_data
 	int				dead;
 	int				is_eating;
 	int				ready;
+	pthread_t		monitor;
 	// t_philo			*philos;
 	pthread_mutex_t	*forks;
 	pthread_mutex_t	print;
@@ -56,6 +57,7 @@ typedef struct s_philo
 	int				meals_eaten;
 	int				last_meal;
 	pthread_t		philo;
+
 	pthread_mutex_t	eating;
 	pthread_mutex_t	*left;
 	pthread_mutex_t	*right;

@@ -6,7 +6,7 @@
 /*   By: snazzal <snazzal@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/18 13:37:47 by snazzal           #+#    #+#             */
-/*   Updated: 2025/06/24 14:09:34 by snazzal          ###   ########.fr       */
+/*   Updated: 2025/06/24 16:10:28 by snazzal          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,8 +54,8 @@ int	destroy_locks(t_philo **philo, t_data *data)
 	}
 	if (pthread_mutex_destroy(&data->state) != 0)
 		ft_putstr_fd("Failed to destroy fork", 2);
-	if (pthread_mutex_destroy(&data->state) != 0)
-		ft_putstr_fd("Failed to destroy death lock", 2);
+	// if (pthread_mutex_destroy(&data->state) != 0)
+	// 	ft_putstr_fd("Failed to destroy death lock", 2);
 	return (1);
 }
 
@@ -180,6 +180,7 @@ t_status	take_forks(t_philo *philo)
 		printf("%ld %d has taken a fork 🍴\n",
 			(get_time() - philo->data->start_time), philo->index);
 		pthread_mutex_unlock(&philo->data->print);
+		philo->data->is_eating = 1;
 	}
 	return (status);
 }
@@ -270,6 +271,7 @@ int	init_philos(t_philo **philos, t_data *data)
 		pthread_mutex_init(&philos[i]->eating, NULL);
 		i++;
 	}
+	(*philos)->data->monitor = 0;
 	philos[data->philos_num] = NULL;
 	return (1);
 }
@@ -323,6 +325,18 @@ t_philo	**init(char **argv, t_data **data)
 	return (philos);
 }
 
+void	*monitor(void *thread)
+{
+	t_philo *philo;
+
+	philo = (t_philo *) thread;
+	while (1)
+	{
+		if (philo->last_meal - get_time() >= philo->data->time_to_die)
+			philo->data->dead = 1;
+	}
+}
+
 int	create_philos(t_philo **philos)
 {
 	int	i;
@@ -340,6 +354,7 @@ int	create_philos(t_philo **philos)
 		}
 		i++;
 	}
+	pthread_create(&(*philos)->data->monitor, NULL, monitor, *philos);
 	return (1);
 }
 
@@ -359,8 +374,6 @@ int	join_philos(t_philo **philos)
 	}
 	return (1);
 }
-
-
 
 int	main(int argc, char **argv)
 {
