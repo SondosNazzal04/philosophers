@@ -6,7 +6,7 @@
 /*   By: snazzal <snazzal@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 11:39:48 by snazzal           #+#    #+#             */
-/*   Updated: 2025/06/24 13:14:36 by snazzal          ###   ########.fr       */
+/*   Updated: 2025/06/24 13:36:58 by snazzal          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ typedef struct s_data
 	int				time_to_eat;
 	int				time_to_sleep;
 	int				meals_required;
-	int				start_time;
+	long			start_time;
 	int				dead;
 	int				is_eating;
 	int				ready;
