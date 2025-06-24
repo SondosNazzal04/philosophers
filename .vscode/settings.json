@@ -5,6 +5,7 @@
 		"string_view": "c",
 		"span": "c",
 		"chrono": "c",
-		"variant": "c"
+		"variant": "c",
+		"iomanip": "c"
 	}
 }
