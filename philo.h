@@ -44,11 +44,14 @@ typedef struct s_data
 	int				dead;
 	int				is_eating;
 	int				ready;
+	int				ready_threads;
+	int				started_threads;
 	pthread_t		monitor;
 	// t_philo			*philos;
 	pthread_mutex_t	*forks;
 	pthread_mutex_t	print;
 	pthread_mutex_t	state;
+	pthread_mutex_t	ready_mutex;
 }	t_data;
 
 typedef struct s_philo
