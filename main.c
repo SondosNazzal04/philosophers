@@ -137,9 +137,14 @@ int	should_stop(t_philo *philo)
 
 void	print_state(char *string, t_philo *philo)
 {
+	long long	timestamp;
+
+	pthread_mutex_lock(&philo->data->state);
+	timestamp = get_time() - philo->data->start_time;
+	pthread_mutex_unlock(&philo->data->state);
 	pthread_mutex_lock(&philo->data->print);
-	printf("%lld %d %s\n", //has taken a fork 🍴
-		(get_time() - philo->data->start_time), philo->index, string);
+	printf("%lld %d %s\n",
+		timestamp, philo->index, string);
 	pthread_mutex_unlock(&philo->data->print);
 }
 
@@ -147,10 +152,6 @@ void	think(t_philo *philo)
 {
 	if (should_stop(philo))
 		return ;
-	// pthread_mutex_lock(&philo->data->print);
-	// printf("%lld %d is thinking 🤔\n",
-	// 	(get_time() - philo->data->start_time), philo->index);
-	// pthread_mutex_unlock(&philo->data->print);
 	print_state("is thinking 🤔", philo);
 	usleep(500);
 }
@@ -172,80 +173,22 @@ int	take_forks(t_philo *philo)
 		first = philo->left;
 		second = philo->right;
 	}
-	// if (philo->index % 2 == 0)
-	// {
-	// 	pthread_mutex_lock(&philo->right->mutex);
-	// 	if (should_stop(philo))
-	// 	{
-	// 		pthread_mutex_unlock(&philo->right->mutex);
-	// 		return (0);
-	// 	}
-	// 	pthread_mutex_lock(&philo->data->print);
-	// 	printf("%lld %d has taken a fork 🍴\n",
-	// 		(get_time() - philo->data->start_time), philo->index);
-	// 	pthread_mutex_unlock(&philo->data->print);
-	// 	pthread_mutex_lock(&philo->left->mutex);
-	// 	if (should_stop(philo))
-	// 	{
-	// 		pthread_mutex_unlock(&philo->right->mutex);
-	// 		pthread_mutex_unlock(&philo->left->mutex);
-	// 		return (0);
-	// 	}
-	// 	pthread_mutex_lock(&philo->data->print);
-	// 	printf("%lld %d has taken a fork 🍴\n",
-	// 		(get_time() - philo->data->start_time), philo->index);
-	// 	pthread_mutex_unlock(&philo->data->print);
-	// 	philo->data->is_eating = 1;
-	// }
-	// else
-	// {
-	// 	pthread_mutex_lock(&philo->left->mutex);
-	// 	if (should_stop(philo))
-	// 	{
-	// 		pthread_mutex_unlock(philo->left);
-	// 		return (0);
-	// 	}
-	// 	pthread_mutex_lock(&philo->data->print);
-	// 	printf("%lld %d has taken a fork 🍴\n",
-	// 		(get_time() - philo->data->start_time), philo->index);
-	// 	pthread_mutex_unlock(&philo->data->print);
-	// 	pthread_mutex_lock(&philo->right->mutex);
-	// 	if (should_stop(philo))
-	// 	{
-	// 		pthread_mutex_unlock(&philo->left->mutex);
-	// 		pthread_mutex_unlock(&philo->right->mutex);
-	// 		return (0);
-	// 	}
-	// 	pthread_mutex_lock(&philo->data->print);
-	// 	printf("%lld %d has taken a fork 🍴\n",
-	// 		(get_time() - philo->data->start_time), philo->index);
-	// 	pthread_mutex_unlock(&philo->data->print);
-	// 	philo->data->is_eating = 1;
-	// }
-		pthread_mutex_lock(&first->mutex);
-		if (should_stop(philo))
-		{
-			pthread_mutex_unlock(&first->mutex);
-			return (0);
-		}
-		// pthread_mutex_lock(&philo->data->print);
-		// printf("%lld %d has taken a fork 🍴\n",
-		// 	(get_time() - philo->data->start_time), philo->index);
-		// pthread_mutex_unlock(&philo->data->print);
-		print_state("has taken a fork 🍴", philo);
-		pthread_mutex_lock(&second->mutex);
-		if (should_stop(philo))
-		{
-			pthread_mutex_unlock(&first->mutex);
-			pthread_mutex_unlock(&second->mutex);
-			return (0);
-		}
-		// pthread_mutex_lock(&philo->data->print);
-		// printf("%lld %d has taken a fork 🍴\n",
-		// 	(get_time() - philo->data->start_time), philo->index);
-		// pthread_mutex_unlock(&philo->data->print);
-		print_state("has taken a fork 🍴", philo);
-		philo->data->is_eating = 1;
+	pthread_mutex_lock(&first->mutex);
+	if (should_stop(philo))
+	{
+		pthread_mutex_unlock(&first->mutex);
+		return (0);
+	}
+	print_state("has taken a fork 🍴", philo);
+	pthread_mutex_lock(&second->mutex);
+	if (should_stop(philo))
+	{
+		pthread_mutex_unlock(&first->mutex);
+		pthread_mutex_unlock(&second->mutex);
+		return (0);
+	}
+	print_state("has taken a fork 🍴", philo);
+	philo->data->is_eating = 1;
 	return (1);
 }
 
@@ -271,10 +214,6 @@ void	sleeping(t_philo *philo)
 {
 	if (should_stop(philo))
 		return ;
-	// pthread_mutex_lock(&philo->data->print);
-	// printf("%lld %d is sleeping 💤\n",
-	// 	(get_time() - philo->data->start_time), philo->index);
-	// pthread_mutex_unlock(&philo->data->print);
 	print_state("is sleeping 💤", philo);
 	milisleep(philo->data->time_to_sleep);
 }
@@ -290,10 +229,6 @@ void	eating(t_philo *philo)
 	// philo->data->is_eating = 0;
 	philo->meals_eaten++;
 	pthread_mutex_unlock(&philo->eating);
-	// pthread_mutex_lock(&philo->data->print);
-	// printf("%lld %d is eating 🍝\n",
-	// 	(get_time() - philo->data->start_time), philo->index);
-	// pthread_mutex_unlock(&philo->data->print);
 	print_state("is eating 🍝", philo);
 }
 
