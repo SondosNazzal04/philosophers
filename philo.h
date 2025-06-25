@@ -6,7 +6,7 @@
 /*   By: snazzal <snazzal@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 11:39:48 by snazzal           #+#    #+#             */
-/*   Updated: 2025/06/24 16:07:44 by snazzal          ###   ########.fr       */
+/*   Updated: 2025/06/25 18:48:07 by snazzal          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ typedef struct s_data
 	int				time_to_eat;
 	int				time_to_sleep;
 	int				meals_required;
-	long			start_time;
+	long long			start_time;
 	int				dead;
 	int				is_eating;
 	int				ready;
@@ -48,7 +48,7 @@ typedef struct s_data
 	int				started_threads;
 	pthread_t		monitor;
 	// t_philo			*philos;
-	pthread_mutex_t	*forks;
+	t_forks			*forks;
 	pthread_mutex_t	print;
 	pthread_mutex_t	state;
 	pthread_mutex_t	ready_mutex;
@@ -62,8 +62,8 @@ typedef struct s_philo
 	pthread_t		philo;
 
 	pthread_mutex_t	eating;
-	pthread_mutex_t	*left;
-	pthread_mutex_t	*right;
+	t_forks			*left;
+	t_forks			*right;
 
 	t_data			*data;
 }	t_philo;
