@@ -6,7 +6,7 @@
 /*   By: snazzal <snazzal@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 12:09:40 by snazzal           #+#    #+#             */
-/*   Updated: 2025/06/26 17:54:09 by snazzal          ###   ########.fr       */
+/*   Updated: 2025/06/26 19:36:28 by snazzal          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,9 +43,9 @@ void	print_state(char *string, t_philo *philo)
 {
 	long long	timestamp;
 
-	pthread_mutex_lock(&philo->data->state);
+	if (check_dead(philo->data))
+		return ;
 	timestamp = get_time() - philo->data->start_time;
-	pthread_mutex_unlock(&philo->data->state);
 	pthread_mutex_lock(&philo->data->print);
 	printf("%lld %d %s\n",
 		timestamp, philo->id, string);

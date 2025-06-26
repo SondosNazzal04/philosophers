@@ -6,7 +6,7 @@
 /*   By: snazzal <snazzal@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 17:39:32 by snazzal           #+#    #+#             */
-/*   Updated: 2025/06/26 17:42:15 by snazzal          ###   ########.fr       */
+/*   Updated: 2025/06/26 20:01:30 by snazzal          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,11 +63,11 @@ int	check_death(t_philo *philo)
 	if (dead)
 	{
 		pthread_mutex_unlock(&philo->eating);
-		pthread_mutex_lock(&philo->data->print);
 		pthread_mutex_lock(&philo->data->state);
 		philo->data->is_stopped = 1;
-		printf("%lld %d died 💀\n", (time - philo->data->start_time), philo->id);
 		pthread_mutex_unlock(&philo->data->state);
+		pthread_mutex_lock(&philo->data->print);
+		printf("%lld %d died 💀\n", (time - philo->data->start_time), philo->id);
 		pthread_mutex_unlock(&philo->data->print);
 		return (1);
 	}

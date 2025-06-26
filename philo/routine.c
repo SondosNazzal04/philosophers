@@ -6,7 +6,7 @@
 /*   By: snazzal <snazzal@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/26 17:33:54 by snazzal           #+#    #+#             */
-/*   Updated: 2025/06/26 17:43:01 by snazzal          ###   ########.fr       */
+/*   Updated: 2025/06/26 19:56:00 by snazzal          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ int	thinking(t_philo *philo)
 	if (check_dead(philo->data))
 		return (0);
 	print_state("is thinking 🤔", philo);
-	usleep(500);
+	usleep(1000);
 	return (1);
 }
 
@@ -62,8 +62,8 @@ void	*routine_philo(void *args)
 
 	philo = (t_philo *)args;
 	wait_threads(philo);
-	if (philo->id % 2 == 0)
-		usleep(1000);
+	if (philo->id % 2)
+		usleep(500);
 	while (1)
 	{
 		if (check_dead(philo->data))
@@ -72,9 +72,9 @@ void	*routine_philo(void *args)
 			break ;
 		if (!eating(philo))
 			break ;
-		if (!thinking(philo))
-			break ;
 		if (!sleeping(philo))
+			break ;
+		if (!thinking(philo))
 			break ;
 	}
 	return (NULL);
