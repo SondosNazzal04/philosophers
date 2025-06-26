@@ -6,7 +6,7 @@
 /*   By: snazzal <snazzal@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/18 13:37:47 by snazzal           #+#    #+#             */
-/*   Updated: 2025/06/25 20:43:24 by snazzal          ###   ########.fr       */
+/*   Updated: 2025/06/26 15:58:19 by snazzal          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -192,17 +192,17 @@ int	take_forks(t_philo *philo)
 	return (1);
 }
 
-// void	sync_start(t_philo *philo)
-// {
-// 	pthread_mutex_lock(&philo->data->state);
-// 	while (!philo->data->ready_threads)
-// 	{
-// 		pthread_mutex_unlock(&philo->data->state);
-// 		usleep(100);
-// 		pthread_mutex_lock(&philo->data->state);
-// 	}
-// 	pthread_mutex_unlock(&philo->data->state);
-// }
+void	sync_start(t_philo *philo)
+{
+	pthread_mutex_lock(&philo->data->state);
+	while (!philo->data->ready_threads)
+	{
+		pthread_mutex_unlock(&philo->data->state);
+		usleep(100);
+		pthread_mutex_lock(&philo->data->state);
+	}
+	pthread_mutex_unlock(&philo->data->state);
+}
 
 void	put_forks(t_philo *philo)
 {
@@ -218,35 +218,37 @@ void	sleeping(t_philo *philo)
 	milisleep(philo->data->time_to_sleep);
 }
 
-void	eating(t_philo *philo)
+int	eating(t_philo *philo)
 {
 	if (should_stop(philo))
-		return ;
+		return (0);
 	pthread_mutex_lock(&philo->eating);
-	milisleep(philo->data->time_to_eat);
 	philo->last_meal = get_time();
+	milisleep(philo->data->time_to_eat);
 	// philo->eating = 0;
 	// philo->data->is_eating = 0;
 	philo->meals_eaten++;
 	pthread_mutex_unlock(&philo->eating);
 	print_state("is eating 🍝", philo);
+	return (1);
 }
 
-void wait_threads(t_philo *philo)
-{
-	pthread_mutex_lock(&philo->data->state);
-	while(philo->data->ready_threads)
-	{
-		pthread_mutex_unlock(&philo->data->state);
-		usleep(100);
-		pthread_mutex_lock(&philo->data->state);
-	}
-	pthread_mutex_unlock(&philo->data->state);
-}
+// void wait_threads(t_philo *philo)
+// {
+// 	pthread_mutex_lock(&philo->data->state);
+// 	while(philo->data->ready_threads)
+// 	{
+// 		pthread_mutex_unlock(&philo->data->state);
+// 		usleep(100);
+// 		pthread_mutex_lock(&philo->data->state);
+// 	}
+// 	pthread_mutex_unlock(&philo->data->state);
+// }
 
 void	init_philo_state(t_philo *philo)
 {
-	wait_threads(philo);
+	// wait_threads(philo);
+	sync_start(philo);
 	if (philo->index % 2 == 0)
 		usleep(1000);
 	pthread_mutex_lock(&philo->eating);
@@ -265,8 +267,9 @@ void	*routine(void *thread)
 		if(should_stop(philo))
 			break;
 		if (!take_forks(philo))
-			return (NULL);
-		eating(philo);
+			break ;
+		if (!eating(philo))
+			break ;
 		put_forks(philo);
 		think(philo);
 		sleeping(philo);
@@ -333,7 +336,7 @@ int	init_data(char **argv, t_data **data)
 	init_forks((*data)->forks, (*data)->philos_num);
 	if (!(*data)->forks)
 		return (0);
-	(*data)->shared = 0;
+	// (*data)->shared = 0;
 	(*data)->dead = 0;
 	(*data)->time_to_die = ft_atoi(argv[2]);
 	(*data)->time_to_eat = ft_atoi(argv[3]);

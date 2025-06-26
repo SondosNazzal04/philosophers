@@ -1,12 +1,10 @@
 {
+    "editor.insertSpaces": false,
+	"editor.detectIndentation": false,
+	"editor.renderWhitespace": "all",
+	"files.trimTrailingWhitespace": true,
+	"files.insertFinalNewline": true,
 	"files.associations": {
-		"array": "c",
-		"string": "c",
-		"string_view": "c",
-		"span": "c",
-		"chrono": "c",
-		"variant": "c",
-		"iomanip": "c",
-		"cstdlib": "c"
+		"chrono": "c"
 	}
 }

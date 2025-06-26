@@ -6,7 +6,7 @@
 /*   By: snazzal <snazzal@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 11:39:48 by snazzal           #+#    #+#             */
-/*   Updated: 2025/06/25 18:48:07 by snazzal          ###   ########.fr       */
+/*   Updated: 2025/06/26 12:16:25 by snazzal          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,10 +31,9 @@ typedef struct s_forks
 	int id;
 	pthread_mutex_t mutex;
 } t_forks;
-
+typedef struct s_philo t_philo;
 typedef struct s_data
 {
-	int				shared;
 	int				philos_num;
 	int				time_to_die;
 	int				time_to_eat;
@@ -47,7 +46,7 @@ typedef struct s_data
 	int				ready_threads;
 	int				started_threads;
 	pthread_t		monitor;
-	// t_philo			*philos;
+	t_philo			*philos;
 	t_forks			*forks;
 	pthread_mutex_t	print;
 	pthread_mutex_t	state;
